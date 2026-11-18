@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAWSA Secretariat Assistant</title>
+<style>
+:root{--ink:#16231d;--green:#0f3d2e;--green2:#1c5a45;--line:#d9dfd9;--bg:#f4f6f3;--card:#fff;--gold:#b8892b;--muted:#5d6b63;--bot:#e6ece7}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:var(--green);color:#fff;padding:18px 16px 0}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:1.5rem;margin:0 0 2px;font-weight:700}
+h2{font-family:Georgia,"Times New Roman",serif;font-size:1.15rem;margin:0 0 8px}
+header p{margin:0 0 14px;color:#cfe0d6;font-size:.95rem}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{flex:1;min-width:max-content;border:0;background:transparent;color:#cfe0d6;padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-bottom-color:var(--gold)}
+main{padding:16px}
+.panel{display:none}.panel.on{display:block}
+#demo{background:#fff4d6;border:1px solid #e6cf8a;padding:8px 12px;border-radius:6px;font-size:.85rem;margin-bottom:12px;display:none}
+#log{background:var(--card);border:1px solid var(--line);border-radius:8px;height:56vh;min-height:320px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:85%;padding:9px 12px;border-radius:10px;white-space:pre-wrap;word-wrap:break-word}
+.bot{background:var(--bot);align-self:flex-start;border-bottom-left-radius:2px}
+.me{background:var(--green2);color:#fff;align-self:flex-end;border-bottom-right-radius:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chips button{border:1px solid var(--green2);background:#fff;color:var(--green2);padding:6px 12px;border-radius:99px;font:inherit;font-size:.9rem;cursor:pointer}
+.chips button:hover{background:var(--green2);color:#fff}
+.send{display:flex;gap:8px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #b9c4bc;border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
+.send button,.btn{background:var(--green);color:#fff;border:0;padding:10px 18px;border-radius:6px;font:inherit;font-weight:600;cursor:pointer}
+.send button:hover,.btn:hover{background:var(--green2)}
+.btn:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+form{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+label{display:block;font-weight:600;margin:12px 0 4px}
+label:first-child{margin-top:0}
+form .btn{margin-top:16px}
+.note{color:var(--muted);font-size:.9rem}
+.box{background:#e9f4ec;border:1px solid #a9cdb5;border-radius:8px;padding:14px;margin-top:14px;white-space:pre-wrap}
+.err{background:#fde8e6;border-color:#e3a39c}
+.row,.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:10px}
+.card:first-child{margin-top:0}
+.card p{margin:2px 0}
+.st{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.85rem;font-weight:600;background:#eee;color:#222}
+.st.Ready{background:#cdeed7;color:#0c5a2b}.st.Issue{background:#fbd5d1;color:#8a1c12}
+.st.Collected{background:#dde3f5;color:#26357a}.st.Payment{background:#fff0c2;color:#6b5000}
+footer{max-width:760px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:.8rem}
+@media (prefers-color-scheme:dark){
+:root{--ink:#e8efe9;--bg:#101714;--card:#18221d;--line:#2b3a32;--bot:#223029;--muted:#9fb0a6}
+input,select,textarea{background:#101714;border-color:#3b4d43}
+.chips button{background:#18221d;color:#9fd8b6;border-color:#4c8a69}
+.chips button:hover{background:#2b6b50;color:#fff}
+.box{background:#1b3226;border-color:#2f5a43}.err{background:#3a1f1c;border-color:#7a3a33}
+#demo{background:#3a321a;border-color:#6b5a22;color:#f1e3b0}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>LAWSA Secretariat Assistant</h1>
+<p>Dues, ID cards and requests, without chasing anyone in the DMs.</p>
+<nav id="nav">
+<button data-tab="chat" class="on">Ask the assistant</button>
+<button data-tab="request">Make a request</button>
+<button data-tab="mine">My requests</button>
+<button data-tab="enquiry">Enquiry or complaint</button>
+<button data-tab="info">Secretariat info</button>
+</nav></div></header>
+
+<main class="wrap">
+<div id="demo">Demo mode: the backend link is not connected yet, so nothing reaches the officials.</div>
+
+<section class="panel on" id="chat">
+<div id="log" aria-live="polite"></div>
+<div class="chips" id="chips"></div>
+<div class="send">
+<input id="msg" placeholder="Type a message, e.g. I want to pay for my ID card" aria-label="Message">
+<button id="go">Send</button>
+</div>
+</section>
+
+<section class="panel" id="request">
+<form id="fReq">
+<label for="rName">Full name</label><input id="rName" required>
+<label for="rMat">Matric number</label><input id="rMat" required>
+<label for="rItem">What are you paying for?</label><select id="rItem"></select>
+<p class="note" id="rFee"></p>
+<button class="btn" type="submit">Create request</button>
+</form>
+<div id="rOut"></div>
+</section>
+
+<section class="panel" id="mine">
+<form id="fMine">
+<label for="mMat">Matric number</label><input id="mMat" required>
+<button class="btn" type="submit">Check my requests</button>
+</form>
+<div id="mOut"></div>
+</section>
+
+<section class="panel" id="enquiry">
+<form id="fEnq">
+<label for="eType">Type</label><select id="eType"><option>Enquiry</option><option>Complaint</option></select>
+<label for="eName">Full name</label><input id="eName" required>
+<label for="eMat">Matric number</label><input id="eMat" required>
+<label for="eCon">Phone or email</label><input id="eCon" required>
+<label for="eMsg">Message</label><textarea id="eMsg" rows="5" maxlength="1500" required></textarea>
+<button class="btn" type="submit">Send to the secretariat</button>
+</form>
+<div id="eOut"></div>
+</section>
+
+<section class="panel" id="info"><div id="infoBody"></div></section>
+</main>
+<footer>Payments are not made on this site. Send proof of payment to the Financial Secretary, who confirms it.</footer>
+
+<script>
+/* ===== 1. BACKEND: Apps Script Web app URL (ends in /exec) ===== */
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZ1-sMjG9E1NhtzKKY2mWCNEAXIx5VHed918uf_DXOPO6FQ-YRUkgBMKPeR2_g2Q4STg/exec";
+
+/* ===== 2. REPLACE THIS SAMPLE DATA WITH THE REAL DETAILS ===== */
+var DATA = {
+  items: [
+    { name: "LAWSA dues", fee: 3000, days: 0, note: "Dues are confirmed once the Financial Secretary sees your proof of payment." },
+    { name: "LAWSA ID card", fee: 2500, days: 14, note: "ID cards are usually ready in about 2 weeks. Collect it at the secretariat." }
+  ],
+  account: { bank: "SAMPLE BANK", number: "0000000000", name: "LAWSA (Sample Account Name)" },
+  contacts: [
+    { role: "Financial Secretary", name: "Sample Name", phone: "0800 000 0000" },
+    { role: "General Secretary", name: "Sample Name", phone: "0800 000 0001" }
+  ],
+  hours: "Monday to Friday, 10am to 3pm",
+  place: "LAWSA Secretariat, Faculty of Law, University of Benin"
+};
+
+var demo = SCRIPT_URL.indexOf("PASTE_") === 0;
+var demoRows = [];
+var waitingMatric = false;
+var $ = function (id) { return document.getElementById(id); };
+var naira = function (n) { return "\u20A6" + Number(n).toLocaleString("en-NG"); };
+var payInfo = "Pay to:\n" + DATA.account.bank + "\nAccount number: " + DATA.account.number + "\nAccount name: " + DATA.account.name +
+  "\n\nThen send your proof of payment to the Financial Secretary (" + DATA.contacts[0].phone + ").";
+
+if (demo) $("demo").style.display = "block";
+
+/* ---- tabs ---- */
+function show(tab) {
+  document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("on", p.id === tab); });
+  document.querySelectorAll("#nav button").forEach(function (b) { b.classList.toggle("on", b.dataset.tab === tab); });
+}
+$("nav").addEventListener("click", function (e) { if (e.target.dataset.tab) show(e.target.dataset.tab); });
+
+/* ---- backend calls ---- */
+function post(d) {
+  if (demo) return Promise.resolve();
+  return fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) });
+}
+function lookup(m) {
+  m = m.trim().toUpperCase();
+  if (demo) return Promise.resolve(demoRows.filter(function (r) { return r.matric === m; }));
+  return fetch(SCRIPT_URL + "?matric=" + encodeURIComponent(m))
+    .then(function (r) { return r.json(); })
+    .then(function (x) { return Array.isArray(x) ? x : []; });
+}
+/* post() cannot confirm a save (no-cors), so check the sheet for the new reference */
+function confirmSaved(mat, id, tries) {
+  return lookup(mat).then(function (rows) {
+    if (rows.some(function (r) { return r.id === id; })) return true;
+    if (tries <= 1) return false;
+    return new Promise(function (res) { setTimeout(res, 1500); })
+      .then(function () { return confirmSaved(mat, id, tries - 1); });
+  }).catch(function () { return false; });
+}
+function ref(p) { return p + "-" + Math.random().toString(36).slice(2, 8).toUpperCase(); }
+function dateIn(days) {
+  var d = new Date(); d.setDate(d.getDate() + days);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+function niceDate(v) {
+  if (!v) return "";
+  if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return new Date(v).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return String(v);
+}
+function showMsg(el, text, bad) {
+  el.innerHTML = ""; var b = document.createElement("div");
+  b.className = "box" + (bad ? " err" : ""); b.textContent = text; el.appendChild(b);
+}
+
+/* ---- status wording ---- */
+function statusText(r) {
+  var s = String(r.status || "Pending"), what = r.item || "request", when = r.due ? " Check back around " + niceDate(r.due) + "." : "";
+  if (s === "Payment confirmed") return "Payment confirmed for " + what + ". It is being processed." + when;
+  if (s === "Ready") return what + " is ready. Come to the secretariat during " + DATA.hours + " to collect it.";
+  if (s === "Collected") return "Our records show " + what + " has been collected.";
+  if (s === "Issue") return "There is a problem with " + what + ". Please contact the " + DATA.contacts[0].role + " on " + DATA.contacts[0].phone + ".";
+  return "We have received your request for " + what + ", but your payment is not confirmed yet. Send your proof of payment to the " + DATA.contacts[0].role + ".";
+}
+function renderRows(el, rows) {
+  el.innerHTML = "";
+  if (!rows.length) { showMsg(el, "No requests found for that matric number. Make a request first, or check the number.", true); return; }
+  rows.forEach(function (r) {
+    var d = document.createElement("div"); d.className = "row";
+    var t = document.createElement("strong"); t.textContent = (r.item || "Request") + " (" + r.id + ")";
+    var s = document.createElement("span"); var st = r.status || "Pending";
+    s.className = "st " + st.split(" ")[0]; s.textContent = st; s.style.marginLeft = "8px";
+    var p = document.createElement("p"); p.style.margin = "8px 0 0"; p.textContent = statusText(r);
+    d.appendChild(t); d.appendChild(s); d.appendChild(p); el.appendChild(d);
+  });
+}
+
+/* ---- secretariat info tab ---- */
+function card(title, lines) {
+  var c = document.createElement("div"); c.className = "card";
+  var h = document.createElement("h2"); h.textContent = title; c.appendChild(h);
+  lines.forEach(function (l) { var p = document.createElement("p"); p.textContent = l; c.appendChild(p); });
+  $("infoBody").appendChild(c);
+}
+function buildInfo() {
+  card("Where and when", [DATA.place, "Open " + DATA.hours + ".", "You only need to go there to collect your ID card or receipt."]);
+  card("Who to contact", DATA.contacts.map(function (c) { return c.role + ": " + c.name + ", " + c.phone; }));
+  card("Fees and timelines", DATA.items.map(function (i) {
+    return i.name + ": " + naira(i.fee) + (i.days ? " (about " + i.days + " days)" : "") + ". " + i.note; }));
+  card("How to pay", [
+    DATA.account.bank + ", account number " + DATA.account.number,
+    "Account name: " + DATA.account.name,
+    "Send your proof of payment to the " + DATA.contacts[0].role + " (" + DATA.contacts[0].phone + "), then track it in My requests."]);
+}
+buildInfo();
+
+/* ---- chat ---- */
+function say(text, who) {
+  var m = document.createElement("div"); m.className = "m " + who; m.textContent = text;
+  $("log").appendChild(m); $("log").scrollTop = $("log").scrollHeight;
+}
+function setChips(list) {
+  $("chips").innerHTML = "";
+  list.forEach(function (t) {
+    var b = document.createElement("button"); b.textContent = t; b.type = "button";
+    b.onclick = function () { handle(t); }; $("chips").appendChild(b);
+  });
+}
+function itemInfo(i) {
+  return i.name + " costs " + naira(i.fee) + ".\n\n" + payInfo + "\n\n" + i.note + "\n\nTo get a reference number and start tracking, open the Make a request tab.";
+}
+function handle(text) {
+  text = text.trim(); if (!text) return;
+  say(text, "me"); $("msg").value = "";
+  var t = text.toLowerCase();
+  if (waitingMatric) {
+    waitingMatric = false;
+    if (!/\s/.test(text) && text.length <= 20) {
+      lookup(text).then(function (rows) {
+        if (!rows.length) { say("I found no requests under " + text.toUpperCase() + ". Check the number, or make a request in the Make a request tab.", "bot"); return; }
+        say(rows.map(function (r) { return (r.item || "Request") + " (" + r.id + "): " + statusText(r); }).join("\n\n"), "bot");
+      }).catch(function () { say("I could not reach the secretariat records. Try again in a moment.", "bot"); });
+      return;
+    }
+  }
+  if (/complain|enquir|inquir|problem/.test(t)) { say("Opening the Enquiry or complaint form for you.", "bot"); show("enquiry"); return; }
+  if (/\bready\b|status|track|progress|\bcheck\b.*(request|id|item|payment|card|dues)/.test(t)) { waitingMatric = true; say("Sure. What is your matric number?", "bot"); return; }
+  if (/\bid\b|id card/.test(t)) { say(itemInfo(DATA.items[1]), "bot"); return; }
+  if (/dues|due\b|pay|account|fee|cost/.test(t)) { say(itemInfo(DATA.items[0]), "bot"); return; }
+  if (/contact|who|reach|secretary|phone|number/.test(t)) {
+    say(DATA.contacts.map(function (c) { return c.role + ": " + c.name + ", " + c.phone; }).join("\n"), "bot"); return; }
+  if (/open|hour|time|where|when|location|info/.test(t)) { say(DATA.place + "\nOpen " + DATA.hours + ".\nYou only need to go there to collect your ID card or receipt.\n\nMore details are in the Secretariat info tab.", "bot"); return; }
+  if (/request/.test(t)) { say("Opening the request form for you.", "bot"); show("request"); return; }
+  say("I can help with LAWSA dues, ID cards, contacts, opening hours, and checking if your item is ready. Pick one below.", "bot");
+}
+$("go").onclick = function () { handle($("msg").value); };
+$("msg").addEventListener("keydown", function (e) { if (e.key === "Enter") handle($("msg").value); });
+say("Hello! I am the LAWSA Secretariat Assistant. I can tell you how to pay dues or for your ID card, who to contact, when the secretariat is open, and whether your item is ready.", "bot");
+setChips(["Pay LAWSA dues", "Get an ID card", "Is my item ready?", "Who do I contact?", "Opening hours", "Make a complaint"]);
+
+/* ---- request form ---- */
+DATA.items.forEach(function (i, n) {
+  var o = document.createElement("option"); o.value = n; o.textContent = i.name; $("rItem").appendChild(o);
+});
+function feeLine() { var i = DATA.items[$("rItem").value]; $("rFee").textContent = "Fee: " + naira(i.fee); }
+$("rItem").onchange = feeLine; feeLine();
+$("fReq").onsubmit = function (e) {
+  e.preventDefault();
+  var btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+  var i = DATA.items[$("rItem").value], id = ref("REQ"), mat = $("rMat").value.trim().toUpperCase();
+  var due = i.days ? dateIn(i.days) : "";
+  var d = { kind: "request", id: id, name: $("rName").value.trim(), matric: mat, item: i.name, fee: naira(i.fee), due: due };
+  if (demo) demoRows.push({ id: id, item: i.name, due: due, status: "Pending", matric: mat });
+  post(d).then(function () { return demo ? true : confirmSaved(mat, id, 4); })
+  .then(function (saved) {
+    if (!saved) {
+      showMsg($("rOut"), "We could not confirm that your request reached the secretariat. Do not pay yet. Wait a minute, check My requests with your matric number, and if it is not there, submit again.", true);
+      return;
+    }
+    showMsg($("rOut"), "Request created.\nReference: " + id + "\nItem: " + i.name + "\nFee: " + naira(i.fee) + "\n" +
+      (due ? "Expected around: " + due + "\n" : "") + "\n" + payInfo + "\n\nKeep your reference number. Check My requests to see when your payment is confirmed.");
+    $("fReq").reset(); feeLine();
+  }).catch(function () { showMsg($("rOut"), "Could not send your request. Check your connection and try again.", true); })
+  .then(function () { btn.disabled = false; });
+};
+
+/* ---- enquiry form ---- */
+$("fEnq").onsubmit = function (e) {
+  e.preventDefault();
+  var btn = e.target.querySelector("button[type=submit]"); btn.disabled = true;
+  var id = ref("ENQ");
+  post({ kind: "enquiry", ref: id, type: $("eType").value, name: $("eName").value.trim(), matric: $("eMat").value.trim().toUpperCase(),
+    contact: $("eCon").value.trim(), message: $("eMsg").value.trim() }).then(function () {
+    showMsg($("eOut"), "Sent. Your reference number is " + id + ". The officials have been notified.");
+    $("fEnq").reset();
+  }).catch(function () { showMsg($("eOut"), "Could not send your message. Check your connection and try again.", true); })
+  .then(function () { btn.disabled = false; });
+};
+
+/* ---- my requests ---- */
+$("fMine").onsubmit = function (e) {
+  e.preventDefault();
+  lookup($("mMat").value).then(function (rows) { renderRows($("mOut"), rows); })
+    .catch(function () { showMsg($("mOut"), "Could not reach the secretariat records. Try again in a moment.", true); });
+};
+</script>
+</body>
+</html>
